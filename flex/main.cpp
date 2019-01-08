@@ -13,6 +13,7 @@
 #include"main.h"
 #include"DFA.h"
 #include"Lexer.h"
+#include <ctime>  //clock_t, clock()
 using namespace std;
 int main()
 {
@@ -37,18 +38,23 @@ int main()
 	*/
 
 	//读取文件中的正则表达式并存储起来。
-	/*
 	vector<NFA> s1 = read_regex_finle_to_nfa("pl0.txt");
 	NFA nfa_3 = connect_nfa(s1);
-	nfa_3.print();
+//	nfa_3.print();
+	clock_t timeStart = clock();
 	middle_DFA middle_dfa = nfa_to_dfa(nfa_3);
+	cout << "construction, milli-seconds : " << (clock() - timeStart) << endl;
+
 	DFA dfa = middle_dfa_to_dfa(middle_dfa);
-	dfa.save();
-	*/
+	//dfa.save();
+
+	/*
 	int i = 0;
 	DFA dfa = read_dfa_file("dfa_.txt");
 	file_name.open("test.txt");
 	token(dfa);
+	system("pause");
+	*/
 	system("pause");
 	return 0;
 }

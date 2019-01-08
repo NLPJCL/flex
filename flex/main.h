@@ -374,36 +374,42 @@ NFA regex_to_nfa()
 	}
 	return node_stack.top();
 }
+#include<queue>;
 //NFA到DFA
-void closure(vector<string> A, map<string, map<string, vector<string>>> &transform_f, vector<string> &B)
+vector<string> closure(vector<string> A, map<string, map<string, vector<string>>> &transform_f)
 //返回A集合中任意一个元素经过任意条K弧（空弧)所能到达的状态集合B
 {
-	if (A.size() != 0)
+	set<string> result(A.begin(),A.end());
+	queue<string> queue_;
+	for (int i = 0; i < A.size(); i++)
 	{
-		vector<string> C;
-		for (int i = 0; i < A.size(); i++)
+		queue_.push(A[i]);
+	}
+	string state;
+	while (queue_.size())
+	{
+		state = queue_.front();
+		queue_.pop();
+		auto w = transform_f.find(state);
+		if (w != transform_f.end()) // 当state是终态时，不会找到这个状态
 		{
-			auto w = transform_f.find(A[i]);
-			if (w != transform_f.end())
+			auto w0 = w->second.find("kkk");
+			if (w0 != w->second.end())//state有空弧转换
 			{
-				auto w0 = w->second.find("kkk");
-				if (w0 != w->second.end())
-				{
 					for (int j = 0; j < w0->second.size(); j++)
 					{
-						B.push_back(w0->second[j]);
-						C.push_back(w0->second[j]);
+						if (result.find(w0->second[j])==result.end())//结果中还没有这个元素
+						{
+							result.insert(w0->second[j]);
+							queue_.push(w0->second[j]);
+						}
 					}
-				}
 			}
 		}
-		A = C;
-		closure(A, transform_f, B);
 	}
-	else
-	{
-		return;
-	}
+	vector<string> t(result.begin(), result.end());
+	sort(t.begin(), t.end());
+	return t;
 }
 void move(vector<string> T, string &char_0, map<string, map<string, vector<string>>> &transform_f, vector<string> &A)
 //状态T中的某一个状态经过一次char_0弧可以到达的状态全体。（经过char_0前可以经过k弧。）
@@ -487,21 +493,17 @@ middle_DFA nfa_to_dfa(NFA nfa)
 		search.push_back(nfa.end);
 	}
 	//求出初态。
-	vector<string> B;
-	B.push_back(nfa.start);
-	closure(B, nfa.transform_f, B);
-	sort(B.begin(), B.end());
-
-	deque<vector<string>> C;//当stack用。
-	C.push_back(B);
+	vector<string> B = closure(vector<string>{nfa.start}, nfa.transform_f);
+	deque<vector<string>> stack_;//当stack用。
+	stack_.push_back(B);
 	set<vector<string>> sign;//看当前状态集合是否已经放入栈中的标记符号。
 	sign.insert(B);
 	vector<string> T;
 	dfa.start = B;//DFA的初始状态。
-	while (C.size() != 0)
+	while (stack_.size() != 0)
 	{
-		T = C.front();
-		C.pop_front();
+		T = stack_.front();
+		stack_.pop_front();
 		//DFA的终态。
 		for (int i=0; i<search.size(); i++)
 		{
@@ -518,9 +520,7 @@ middle_DFA nfa_to_dfa(NFA nfa)
 			move(T, nfa.input_char[i], nfa.transform_f, A);
 			sort(A.begin(), A.end());
 			A.erase(unique(A.begin(), A.end()), A.end());
-			vector<string> Z = A;
-			closure(A, nfa.transform_f, Z);
-			sort(Z.begin(), Z.end());
+			vector<string> Z = closure(A, nfa.transform_f);
 			if (Z.size() == 0)
 			{
 				Z.push_back("111111");
@@ -530,7 +530,7 @@ middle_DFA nfa_to_dfa(NFA nfa)
 			if (sign.find(Z) == sign.end())
 			{
 				sign.insert(Z);
-				C.push_front(Z);
+				stack_.push_front(Z);
 			}
 
 			W[nfa.input_char[i]] = Z;
