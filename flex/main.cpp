@@ -45,7 +45,7 @@ int main()
 	DFA dfa = middle_dfa_to_dfa(middle_dfa);
 	dfa.save();
 	*/
-
+	int i = 0;
 	DFA dfa = read_dfa_file("dfa_.txt");
 	file_name.open("test.txt");
 	token(dfa);
