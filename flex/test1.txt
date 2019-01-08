@@ -1,0 +1,11 @@
+var C;
+const a=5;
+begin
+	c:=15;
+	if c>10
+	then
+	c:=11;
+	else
+	c:=12;
+	write(a);
+end.

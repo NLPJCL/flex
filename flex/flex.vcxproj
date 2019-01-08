@@ -115,6 +115,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DFA.h" />
+    <ClInclude Include="Lexer.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="middle_DFA.h" />
+    <ClInclude Include="NFA.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
