@@ -7,5 +7,5 @@ begin
 	c:=11;
 	else
 	c:=12;
-	write(a);
+	write(c);
 end.

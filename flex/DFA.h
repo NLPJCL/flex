@@ -15,9 +15,9 @@ public:
 	{
 		
 	}
-	void save()
+	void save(string file_name)
 	{
-		ofstream dfa_file("dfa_.txt");
+		ofstream dfa_file(file_name);
 		//开始节点
 		dfa_file << start << endl;
 		//结束节点
@@ -48,10 +48,11 @@ public:
 		}
 	}
 	//为了构造词法分析器引入数据类型、
-	map<string, string> end_type;
+	map<string, string> end_type;// 结束状态对应的类型。
 	//NFA基础数据结构。
 	string start;//开始节点
 	vector<string> end;//结束节点
+	vector<string>  all_state;//所有状态。
 	vector<string> input_char;//输入字符串
 	map<string, map<string, string>> transform_f;//转换函数
 };	

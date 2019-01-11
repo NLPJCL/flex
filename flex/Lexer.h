@@ -5,7 +5,7 @@
 #include"main.h"
 #include"DFA.h"
 //词法分析器相关，读取文件中的正则表达式。将其转换成对应的NFA，并返回一个NFA的数组。
-vector<NFA> read_regex_finle_to_nfa(string file_name)
+vector<NFA> read_regex_file_to_nfa(string file_name)
 {
 	fstream regex_file(file_name);
 	string line;
@@ -24,7 +24,7 @@ vector<NFA> read_regex_finle_to_nfa(string file_name)
 	}
 	return vector_nfa;
 }
-//连接两个NFA
+//连接N个NFA
 NFA connect_nfa(vector<NFA> s1)
 {
 	NFA nfa;
@@ -70,6 +70,9 @@ DFA middle_dfa_to_dfa(middle_DFA middle_dfa)
 	i++;
 	map<vector<string>, string> sign;
 	sign[middle_dfa.start] = dfa.start;
+	//所有状态
+	set<string> all_state_set;
+	all_state_set.insert(to_string(i));
 
 	for (auto w = middle_dfa.transform_f.begin(); w != middle_dfa.transform_f.end(); w++)
 	{
@@ -79,6 +82,7 @@ DFA middle_dfa_to_dfa(middle_DFA middle_dfa)
 			if (sign.find(w0->second) == sign.end())
 			{
 				sign[w0->second] = to_string(i);
+				all_state_set.insert(to_string(i));//收集所有状态。
 				q[w0->first] = to_string(i);
 				i++;
 			}
@@ -90,6 +94,7 @@ DFA middle_dfa_to_dfa(middle_DFA middle_dfa)
 		if (sign.find(w->first) == sign.end())
 		{
 			sign[w->first] = to_string(i);
+			all_state_set.insert(to_string(i));//收集所有状态。
 			dfa.transform_f[to_string(i)] = q;
 			i++;
 		}
@@ -104,9 +109,154 @@ DFA middle_dfa_to_dfa(middle_DFA middle_dfa)
 		dfa.end.push_back(sign[middle_dfa.end[i]]);//结束状态赋值
 		dfa.end_type[sign[middle_dfa.end[i]]] = middle_dfa.end_type[middle_dfa.end[i]];//结束状态对应类型。
 	}
+	for (auto w = all_state_set.begin(); w != all_state_set.end(); w++)
+	{
+		dfa.all_state.push_back(*w);
+	}
 	return dfa;
 }
+//DFA的最小化
+DFA min_DFA(DFA dfa)
+{
+	int count = 0;//所有子集的唯一标志。
 
+	map<string, int> state_set;//第一个参数是一个状态，第二个参数子集对应的唯一标志。
+
+
+
+	//构建初始的接受状态和非接受状态。
+	
+	//把各种类型的终态放进去。
+
+	//中间数据结构
+	multimap<string, string> type_end;//对应的类型，状态。
+
+	for (auto w=dfa.end_type.begin();w!=dfa.end_type.end();w++)
+	{
+		type_end.insert(make_pair(w->second, w->first));
+	}
+
+	map<vector<string>, int> all_set;
+	vector<string> new_;
+	string old_type;
+	int t = 0;
+	//
+
+	for (auto w = type_end.begin(); w != type_end.end(); w++)
+	{
+		if (old_type != w->first&&t!=0)
+		{
+			all_set[new_] = count;
+			count++;
+			new_.clear();
+		}
+		t = 1;
+		new_.push_back(w->second);
+		old_type = w->first;
+	}
+
+	all_set[new_] = count;
+	count++;
+
+	//
+	for (auto w = all_set.begin(); w != all_set.end(); w++)
+	{
+		for (int i= 0; i<w->first.size(); i++)
+		{
+			state_set[w->first[i]] = all_set[w->first];
+		}
+	}
+	//构建非接受状态
+	sort(dfa.end.begin(), dfa.end.end());
+	vector<string> no_acceptable;
+	for (int i = 0; i < dfa.all_state.size(); i++)
+	{
+		if (binary_search(dfa.end.begin(), dfa.end.end(), dfa.all_state[i]))
+		{
+			continue;
+		}
+		no_acceptable.push_back(dfa.all_state[i]);
+		state_set[dfa.all_state[i]] = count;
+	}
+	all_set[no_acceptable] = count;
+	count++;
+	cout << count << endl;
+	//单元测试,输出各种结束状态，和非接受状态
+	/*
+	for (auto w = all_set.begin(); w != all_set.end(); w++)
+	{
+		for(int i=0;i<w->first.size();i++)
+		{
+			cout << w->first[i] << " ";
+		}
+
+		cout << ":"<<w->second <<endl;
+	}
+
+	*/
+	cout << "分割法化简前：总的状态类型是：" << all_set.size() << endl;
+
+	//分割法
+	for (auto z = all_set.begin(); z != all_set.end(); z++)
+	{
+		if (z->first.size() != 1)
+		{
+			for (int q = 0; q < dfa.input_char.size(); q++)
+			{
+				map<string, string> A = move(z->first, dfa.input_char[q], dfa.transform_f);
+
+				vector<vector<string>> w0(count + 1);//用来存储不同分组的信息。
+				set<int> z0;
+				for (auto w = A.begin(); w != A.end(); w++)
+				{
+					w0[state_set[w->second]].push_back(w->first);
+					z0.insert(state_set[w->second]);
+				}
+				if (z0.size() != 1)
+				{
+					all_set.erase(z->first);
+					for (int i = 0; i < w0.size(); i++)
+					{
+						if (w0[i].size() != 0)
+						{
+							all_set.insert(make_pair(w0[i], count));
+							count++;
+
+							for (int j = 0; j < w0[i].size(); j++)
+							{
+								state_set[w0[i][j]] = count;
+							}
+						}
+					}
+					z = all_set.begin();
+					break;
+				}
+			}
+		}
+	}
+	//转换变换关系。
+	int num = 0;
+	for (auto w = all_set.begin(); w != all_set.end(); w++)
+	{
+	//	cout << w->first.size() << endl;
+		num ++;
+	}
+	cout << "化简过后：总的状态类型是："<<all_set.size()<< endl;
+
+
+
+	//DFA dfa;
+
+	return DFA();
+
+
+
+	//分割法
+
+
+
+
+}
 //从已经生成的DFA开始进行词法分析。
 
 //读取dfa文件。
@@ -204,6 +354,7 @@ string getch_pl0()
 	}
 	else
 	{
+
 		return "";
 	}
 }
@@ -221,8 +372,11 @@ void token(DFA dfa)
 		if (w0 != w->second.end() && w0->second != "9"&&t)//有下一个状态和下一个状态不是空"9"为空和遇到空格和tab要重新开始新的定位。
 		{
 			id = id + ch;
-			s = w0->second;
-			ch = getch_pl0();
+			s = w0->second;	
+			if (id != ".")
+			{
+				ch = getch_pl0();
+			}
 			while (ch == "\t" || ch == " ")
 			{
 				ch = getch_pl0();
@@ -241,15 +395,22 @@ void token(DFA dfa)
 
 				if (dfa.end_type[final_state] == "ident")
 				{
-					cout << id << ":ident" << endl;
+					cout << id << ":ident"<<endl;
+					map_count["ident"]++;
 				}
 				else if (dfa.end_type[final_state] == "number")
 				{
-					cout << id << ":number" << endl;
+					cout << id << ":number"<<endl ;
+					map_count["number"]++;
 				}
 				else
 				{
+					map_count[id]++;
 					cout << id << ":" << dfa.end_type[final_state] << endl;
+					if (id == ".")
+					{
+						break;
+					}
 				}
 				s = dfa.start;
 				id.clear();

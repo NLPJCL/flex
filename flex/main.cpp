@@ -18,27 +18,10 @@ using namespace std;
 int main()
 {
 
-	/*
-	regex = "if";
-	NFA nfa = regex_to_nfa();
-	nfa.type = "if";
-	nfa.print();
-	//pl/0的标识符
-	regex = "(i|j)(f|8)*";
-	NFA nfa_1 = regex_to_nfa();
-	nfa_1.type = "ident";
-	nfa_1.print();
-	//pl/0的数字
-	regex = "(1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*";
-	NFA nfa_2 = regex_to_nfa();
-	nfa_2.type = "number";
-	vector<NFA> s1;
-	s1.push_back(nfa);
-	s1.push_back(nfa_1);
-	*/
-
 	//读取文件中的正则表达式并存储起来。
-	vector<NFA> s1 = read_regex_finle_to_nfa("pl0.txt");
+
+	/*
+	vector<NFA> s1 = read_regex_file_to_nfa("a.txt");
 	NFA nfa_3 = connect_nfa(s1);
 //	nfa_3.print();
 	clock_t timeStart = clock();
@@ -46,15 +29,19 @@ int main()
 	cout << "construction, milli-seconds : " << (clock() - timeStart) << endl;
 
 	DFA dfa = middle_dfa_to_dfa(middle_dfa);
-	//dfa.save();
-
-	/*
-	int i = 0;
-	DFA dfa = read_dfa_file("dfa_.txt");
-	file_name.open("test.txt");
-	token(dfa);
-	system("pause");
+	dfa.save("a_dfa.txt");
+//	dfa = min_DFA(dfa);//功能尚未完善，关注github更新。
 	*/
+
+	//打开对应DFA进行词法分析以及统计
+	DFA dfa = read_dfa_file("dfa_opt.txt");
+	file_name.open("test1.txt");
+	token(dfa);
+
+	for (auto w = map_count.begin(); w != map_count.end(); w++)
+	{
+		cout << w->first << "\t字符共有" << w->second <<"个"<< endl;
+	}
 	system("pause");
 	return 0;
 }

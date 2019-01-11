@@ -7,6 +7,7 @@ fstream file_name;
 string line;
 string id;
 string number;
+map<string, int> map_count;
 int line_number = 0;//词法分析报错使用。
 //正则到NFA相关
 //工具函数，是否添加连接符？
@@ -20,7 +21,6 @@ bool is_insert(string s1, string s2)
 	{
 		return 0;
 	}
-
 }
 string getch()//读取正则，返回正则表达式的一个字符。
 {
@@ -155,7 +155,6 @@ NFA  closure_nfa(NFA s1)//正则表达式的闭包。
 		nfa.transform_f[w->first] = w->second;
 	}
 	return nfa;
-
 }
 //正则转换为NFA
 NFA regex_to_nfa()
@@ -411,10 +410,30 @@ vector<string> closure(vector<string> A, map<string, map<string, vector<string>>
 	sort(t.begin(), t.end());
 	return t;
 }
-void move(vector<string> T, string &char_0, map<string, map<string, vector<string>>> &transform_f, vector<string> &A)
+vector<string> move(vector<string> T, string &char_0, map<string, map<string, vector<string>>> &transform_f)
 //状态T中的某一个状态经过一次char_0弧可以到达的状态全体。（经过char_0前可以经过k弧。）
 //tramsform_f是转移函数。A是状态全体。
 {
+	set<string> result;
+	for (int i = 0; i < T.size(); i++)
+	{
+		auto w = transform_f.find(T[i]);
+		if (w != transform_f.end())//如果不是终态
+		{
+			auto w0 = w->second.find(char_0);
+			if (w0 != w->second.end())//如果有char_0弧转换
+			{
+				for (int j = 0; j < w0->second.size(); j++)
+				{
+					result.insert(w0->second[j]);
+				}
+			}
+		}
+	}
+	vector<string> t(result.begin(), result.end());
+	sort(t.begin(), t.end());
+	return t;
+	/*
 	for (int i = 0; i < T.size(); i++)
 	{
 
@@ -444,35 +463,29 @@ void move(vector<string> T, string &char_0, map<string, map<string, vector<strin
 			}
 		}
 	}
+	*/
 }
-void move(vector<string> T, string &char_0, map<string, map<string, string>> &transform_f, map<string, string> &A)
+map<string,string> move(vector<string> T, string &char_0, map<string, map<string, string>> &transform_f)
 //状态T中的某一个状态经过一次char_0弧可以到达的状态全体。（经过char_0前可以经过k弧。）
 {
 
+	map<string,string> result;
 	for (int i = 0; i < T.size(); i++)
 	{
-
-		vector<string> C;
 		auto w = transform_f.find(T[i]);
-		if (w != transform_f.end())
+		if (w != transform_f.end())//如果不是终态
 		{
-			auto w0 = w->second.find("kkk");
-			if (w0 != w->second.end())
+			auto w0 = w->second.find(char_0);
+			if (w0 != w->second.end())//如果有char_0弧转换
 			{
-				C.push_back(w0->second);
-				move(C, char_0, transform_f, A);
-			}
-			else
-			{
-				w0 = w->second.find(char_0);
-				if (w0 != w->second.end())
+				for (int j = 0; j < w0->second.size(); j++)
 				{
-
-					A[w->first] = w0->second;
+					result[T[i]]= w0->second[j];
 				}
 			}
 		}
 	}
+	return result;
 }
 middle_DFA nfa_to_dfa(NFA nfa)
 {
@@ -516,10 +529,7 @@ middle_DFA nfa_to_dfa(NFA nfa)
 		map<string, vector<string>> W;
 		for (int i = 0; i < nfa.input_char.size(); i++)
 		{
-			vector<string> A;
-			move(T, nfa.input_char[i], nfa.transform_f, A);
-			sort(A.begin(), A.end());
-			A.erase(unique(A.begin(), A.end()), A.end());
+			vector<string> A=move(T, nfa.input_char[i], nfa.transform_f);
 			vector<string> Z = closure(A, nfa.transform_f);
 			if (Z.size() == 0)
 			{
